@@ -24,24 +24,24 @@ d3.csv("data.csv", type, function(error, data) {
     }
 
     let min = parseInt(years_final[0])
-    let max = parseInt(years_final[years_final.length - 2])
+    let max = parseInt(years_final[years_final.length - 1])
 
     $("#slider-range").slider({
         range: true,
         min: min,
         max: max,
-        values: [min, min],
+        values: [min, min+1],
         slide: function(event, ui) {
-            $("#amount").val(ui.values[0] + " - " + ui.values[1]);
+            if(ui.values[0]-ui.values[1]==0){
+                return false
+            }
+            $("#amount").val(ui.values[0] + " - " + ui.values[1]);   
         }
     });
 
     $("#amount").val($("#slider-range").slider("values", 0) +
         " - " + $("#slider-range").slider("values", 1));
 
-    for (var i = 0; i < uniqueYears.length; i++) {
-        $('<option/>').val(i + 1).html(i + 1).appendTo('#periods');
-    }
 
 });
 
@@ -54,17 +54,13 @@ $("#slider-range").slider({
         periodos = periodos + 1
         createChart(valores_slider[0], periodos, modo)
 
-        // var values = $("#slider-range").slider("values");
-        // let periods = values[1] - values[0]
-        // periods = periods + 1
-        // createChart(values[0], periods, modo)
     }
 });
 
 $("#chart_mode").click(function() {
     if (($(this).text() == "Normal")) {
-        $(this).text('Acumulative');
-        modo = 'Acumulative'
+        $(this).text('Cumulative');
+        modo = 'Cumulative'
     } else {
         $(this).text('Normal');
         modo = 'Normal'
@@ -90,7 +86,6 @@ function dollarFormatter(n) {
 
 function createChart(value, periods, modo) {
 
-    periods++
 
     var margin = { top: 20, right: 30, bottom: 100, left: 45 },
         width = screen.width - margin.left - margin.right,
@@ -263,9 +258,11 @@ function createChart(value, periods, modo) {
             sales_prices[0].re_name = sales_prices[0].name
             sales_prices[0].name = sales_prices[0].name + " " + sales_prices[0].year
             sales_prices[0].start = 0
-            sales_prices[0].end = sales_prices[0].value; //Le da un valor del valor
+            sales_prices[0].end = sales_prices[0].value;
             sales_prices[0].class = 'total'
             data_final.push(sales_prices[0])
+
+            console.log(sales_prices)
 
             if (sales_prices.length > 1) {
 
@@ -311,7 +308,7 @@ function createChart(value, periods, modo) {
 
                 obj_volume.re_name = "Volume"
                 obj_volume.name = "Volume"
-                obj_volume.start = sales_prices[sales_prices.length - 1].end
+                obj_volume.start = sales_prices[0].end
                 obj_volume.end = obj_volume.start + volume;
                 obj_volume.value = (obj_volume.end) - (obj_volume.start)
                 obj_volume.class = (volume >= 0) ? 'positive' : 'negative'
@@ -377,7 +374,7 @@ function createChart(value, periods, modo) {
                 "translate(" + (width / 2) + " ," +
                 (height + margin.top + 55) + ")")
             .style("text-anchor", "middle")
-            .text("Values")
+            .text("Parameters")
 
         var bar = chart.selectAll(".bar")
             .data(data_final)
@@ -420,12 +417,7 @@ function createChart(value, periods, modo) {
 
 
         bar.filter(function(d) { return d.class != "total" }).append("line") //return d.class != "total"
-            .attr("class", function(d) {
-                if (modo != "Acumulative") {
-                    return "connector"
-                }
-
-            })
+            .attr("class", "connector")
             .attr("x1", x.rangeBand() + 5)
             .attr("y1", function(d) { return y(d.end) })
             .attr("x2", x.rangeBand() / (1 - padding) - 5)
